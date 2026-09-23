@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>风险推移 - 事务工具台</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <a href="../index.html" class="back-btn">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+        </svg>
+      </a>
+      <h1>风险推移</h1>
+      <p>库存推移数据分析与风险判断</p>
+    </header>
+    <main class="app-content">
+      <!-- Step 1: Upload -->
+      <div class="section-card">
+        <div class="section-title">
+          <span class="step-num">1</span>
+          导入Excel数据
+        </div>
+        <div id="uploadZone" class="upload-zone">
+          <svg class="upload-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z M15 13v3h-3v2h-2v-2H7v-2h3v-3h2v3h3z"/>
+          </svg>
+          <p id="uploadText">点击或拖拽Excel文件到此处</p>
+          <p class="upload-hint">支持 .xlsx / .xls 格式</p>
+          <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;">
+        </div>
+      </div>
+
+      <!-- Step 2: Results -->
+      <div id="resultsSection" style="display:none;">
+        <!-- Summary -->
+        <div class="section-card">
+          <div class="section-title">
+            <span class="step-num">2</span>
+            数据处理结果
+          </div>
+          <div class="result-summary">
+            <div class="summary-item">
+              <div class="summary-value" id="statTotal">0</div>
+              <div class="summary-label">总数据行</div>
+            </div>
+            <div class="summary-item danger">
+              <div class="summary-value" id="statRisk">0</div>
+              <div class="summary-label">风险点数</div>
+            </div>
+            <div class="summary-item danger">
+              <div class="summary-value" id="statAssembly">0</div>
+              <div class="summary-label">不满足总装</div>
+            </div>
+            <div class="summary-item warning">
+              <div class="summary-value" id="statPaint">0</div>
+              <div class="summary-label">不满足涂装</div>
+            </div>
+          </div>
+          <div style="margin-top: 16px;">
+            <button class="btn btn-primary" id="downloadBtn">
+              <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+              </svg>
+              下载处理后的Excel
+            </button>
+          </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="section-card">
+          <div class="section-title">
+            <span class="step-num">3</span>
+            数据明细
+          </div>
+          <div class="table-controls">
+            <div class="left-group">
+              <label class="toggle-switch">
+                <input type="checkbox" id="filterRisk">
+                <span>仅显示风险项</span>
+              </label>
+            </div>
+            <div class="right-group">
+              <div class="table-stats">
+                <div class="stat">
+                  <span class="stat-label">当前显示</span>
+                  <span class="stat-value" id="statDisplay">0</span>
+                  <span class="stat-label">行</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" id="dataTable">
+              <thead id="tableHead"></thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="pagination"></div>
+        </div>
+
+        <!-- Step 4: Output -->
+        <div class="section-card">
+          <div class="section-title">
+            <span class="step-num">4</span>
+            输出结果
+          </div>
+          <div class="output-grid">
+            <!-- Image Preview -->
+            <div class="output-card">
+              <div class="card-header">
+                <h3>
+                  <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                  </svg>
+                  图片预览
+                </h3>
+                <button class="btn btn-outline btn-sm" id="downloadImgBtn">
+                  下载图片
+                </button>
+              </div>
+              <div class="image-preview-container">
+                <div class="image-preview-toolbar">
+                  <div class="zoom-controls">
+                    <button id="zoomOut">−</button>
+                    <span class="zoom-level" id="zoomLevel">100%</span>
+                    <button id="zoomIn">+</button>
+                  </div>
+                  <div style="font-size: 12px; color: var(--text-tertiary);">从零件号到风险判断</div>
+                </div>
+                <div class="image-preview-area" id="imagePreviewArea">
+                  <div class="image-preview-placeholder">
+                    <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                    </svg>
+                    <p>上传文件后生成预览</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Text Output -->
+            <div class="output-card">
+              <div class="card-header">
+                <h3>
+                  <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z M8 12h8v2H8zm0 4h8v2H8z"/>
+                  </svg>
+                  文字输出
+                </h3>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn btn-outline btn-sm" id="copyTextBtn">
+                    复制文字
+                  </button>
+                  <button class="btn btn-secondary btn-sm" id="regenTextBtn">
+                    重新生成
+                  </button>
+                </div>
+              </div>
+              <div class="text-output-area">
+                <div class="text-output-toolbar">
+                  <span style="font-size: 12px; color: var(--text-tertiary);">可直接编辑下方文字，复制后发送至微信</span>
+                </div>
+                <textarea id="textOutput" placeholder="上传文件后自动生成..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Hidden capture table for image generation -->
+  <div class="capture-container">
+    <table class="capture-table" id="captureTable"></table>
+  </div>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <p id="loadingText">正在处理数据...</p>
+    </div>
+  </div>
+
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="../js/risk-shift.js"></script>
+</body>
+</html>
